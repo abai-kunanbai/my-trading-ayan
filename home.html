@@ -11,8 +11,6 @@
             background-color: #131722;
             color: #d1d4dc;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            display: flex;
-            flex-direction: column;
             height: 100vh;
             overflow: hidden;
         }
@@ -45,16 +43,10 @@
             border-color: #2962ff;
         }
 
-        /* Область графика */
-        .main-container {
-            display: flex;
-            flex-direction: column;
-            flex: 1;
-        }
-
+        /* Область графика: точная высота минус шапка и редактор */
         #chart-container {
-            flex: 1;
             width: 100%;
+            height: calc(100vh - 268px);
             position: relative;
         }
 
@@ -112,16 +104,16 @@
         <span id="current-symbol-title" style="margin-left: auto; font-weight: bold; color: #2962ff;">BTCUSD</span>
     </div>
 
-    <!-- График и Редактор -->
-    <div class="main-container">
-        <div id="chart-container"></div>
+    <!-- График -->
+    <div id="chart-container"></div>
 
-        <div class="editor-panel">
-            <div class="editor-header">
-                <span>Редактор индикаторов (JavaScript код)</span>
-                <button class="run-btn" onclick="runCustomIndicator()">Добавить индикатор</button>
-            </div>
-            <textarea id="code-editor" placeholder="// Введите код вашего индикатора здесь
+    <!-- Редактор кода -->
+    <div class="editor-panel">
+        <div class="editor-header">
+            <span>Редактор индикаторов (JavaScript код)</span>
+            <button class="run-btn" onclick="runCustomIndicator()">Добавить индикатор</button>
+        </div>
+        <textarea id="code-editor" placeholder="// Введите код вашего индикатора здесь
 // Пример расчета скользящей средней (SMA 3):
 const smaData = [];
 for (let i = 2; i < candles.length; i++) {
@@ -131,7 +123,6 @@ for (let i = 2; i < candles.length; i++) {
 const smaSeries = chart.addLineSeries({ color: '#f0b90b', lineWidth: 2 });
 smaSeries.setData(smaData);
 "></textarea>
-        </div>
     </div>
 
     <script>
@@ -159,7 +150,7 @@ smaSeries.setData(smaData);
 
         let candles = marketData[currentSymbol];
 
-        // Инициализация графиков
+        // Инициализация графика
         const chartElement = document.getElementById('chart-container');
         const chart = LightweightCharts.createChart(chartElement, {
             layout: {
@@ -181,7 +172,6 @@ smaSeries.setData(smaData);
             wickDownColor: '#f23645',
         });
 
-        // Загрузка начальных данных
         candleSeries.setData(candles);
 
         // Переключение торговой пары
@@ -208,7 +198,7 @@ smaSeries.setData(smaData);
             }
         }
 
-        // Автоматическая подстройка размера при изменении окна
+        // Автоматическая подстройка размера
         window.addEventListener('resize', () => {
             chart.resize(chartElement.clientWidth, chartElement.clientHeight);
         });
