@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="kk">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -15,7 +15,7 @@
             overflow: hidden;
         }
 
-        /* Верхняя панель */
+        /* Үстүңкү панель */
         .header {
             height: 48px;
             background-color: #1e222d;
@@ -43,14 +43,14 @@
             border-color: #2962ff;
         }
 
-        /* Область графика: точная высота минус шапка и редактор */
+        /* График аймағы */
         #chart-container {
             width: 100%;
             height: calc(100vh - 268px);
             position: relative;
         }
 
-        /* Панель редактора кода */
+        /* Төменгі код редактор панели */
         .editor-panel {
             height: 220px;
             background-color: #1e222d;
@@ -97,24 +97,24 @@
 </head>
 <body>
 
-    <!-- Шапка: Переключение активов -->
+    <!-- Активтерді таңдау -->
     <div class="header">
         <button class="symbol-btn active" onclick="switchSymbol('BTCUSD')">BTC/USD</button>
-        <button class="symbol-btn" onclick="switchSymbol('XAUUSD')">XAU/USD (Золото)</button>
+        <button class="symbol-btn" onclick="switchSymbol('XAUUSD')">XAU/USD (Алтын)</button>
         <span id="current-symbol-title" style="margin-left: auto; font-weight: bold; color: #2962ff;">BTCUSD</span>
     </div>
 
     <!-- График -->
     <div id="chart-container"></div>
 
-    <!-- Редактор кода -->
+    <!-- Редактор -->
     <div class="editor-panel">
         <div class="editor-header">
-            <span>Редактор индикаторов (JavaScript код)</span>
-            <button class="run-btn" onclick="runCustomIndicator()">Добавить индикатор</button>
+            <span>Индикатор редактору (JavaScript коду)</span>
+            <button class="run-btn" onclick="runCustomIndicator()">Индикаторды қосу</button>
         </div>
-        <textarea id="code-editor" placeholder="// Введите код вашего индикатора здесь
-// Пример расчета скользящей средней (SMA 3):
+        <textarea id="code-editor" placeholder="// Индикатор кодын осында жазыңыз
+// Мысалы (SMA 3):
 const smaData = [];
 for (let i = 2; i < candles.length; i++) {
     const avg = (candles[i].close + candles[i-1].close + candles[i-2].close) / 3;
@@ -128,7 +128,6 @@ smaSeries.setData(smaData);
     <script>
         let currentSymbol = 'BTCUSD';
         
-        // Встроенные данные свечей
         const marketData = {
             'BTCUSD': [
                 { time: '2026-11-01', open: 68000, high: 69500, low: 67500, close: 69000 },
@@ -150,18 +149,23 @@ smaSeries.setData(smaData);
 
         let candles = marketData[currentSymbol];
 
-        // Инициализация графика
         const chartElement = document.getElementById('chart-container');
+        
+        // Графикті құру (Логотипасыз және әдемі қара стильде)
         const chart = LightweightCharts.createChart(chartElement, {
             layout: {
                 backgroundColor: '#131722',
                 textColor: '#d1d4dc',
+                attributionLogo: false, // <-- «TV» логотипін толығымен өшіретін жол
             },
             grid: {
                 vertLines: { color: '#2a2e39' },
                 horzLines: { color: '#2a2e39' },
             },
-            timeScale: { borderColor: '#2a2e39' },
+            timeScale: { 
+                borderColor: '#2a2e39',
+                timeVisible: true,
+            },
         });
 
         const candleSeries = chart.addCandlestickSeries({
@@ -174,7 +178,6 @@ smaSeries.setData(smaData);
 
         candleSeries.setData(candles);
 
-        // Переключение торговой пары
         function switchSymbol(symbol) {
             currentSymbol = symbol;
             document.getElementById('current-symbol-title').innerText = symbol;
@@ -187,18 +190,16 @@ smaSeries.setData(smaData);
             candleSeries.setData(candles);
         }
 
-        // Запуск пользовательского кода индикатора
         function runCustomIndicator() {
             const userCode = document.getElementById('code-editor').value;
             try {
                 const runCode = new Function('chart', 'candles', userCode);
                 runCode(chart, candles);
             } catch (e) {
-                alert('Ошибка в коде индикатора: ' + e.message);
+                alert('Индикатор кодунда ката бар: ' + e.message);
             }
         }
 
-        // Автоматическая подстройка размера
         window.addEventListener('resize', () => {
             chart.resize(chartElement.clientWidth, chartElement.clientHeight);
         });
