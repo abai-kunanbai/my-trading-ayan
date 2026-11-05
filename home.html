@@ -7,72 +7,188 @@
     <!-- TradingView Lightweight Charts Кітапханасы -->
     <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
     <style>
+        * { box-sizing: border-box; }
         html, body {
             margin: 0;
             padding: 0;
             width: 100%;
             height: 100vh;
             background-color: #131722;
+            color: #d1d4dc;
+            font-family: Arial, sans-serif;
+            display: flex;
             overflow: hidden;
         }
-        #chart {
+        /* Сол жақ панель (Басқару және код жазу) */
+        #sidebar {
+            width: 320px;
+            background-color: #1e222d;
+            border-right: 1px solid #2a2e39;
+            display: flex;
+            flex-direction: column;
+            padding: 15px;
+            gap: 15px;
+        }
+        h2 { font-size: 18px; margin: 0 0 10px 0; color: #2962FF; }
+        .section-title { font-size: 14px; font-weight: bold; margin-bottom: 5px; }
+        
+        /* Түймелер */
+        .btn-group { display: flex; gap: 10px; }
+        .asset-btn {
+            flex: 1;
+            padding: 10px;
+            background-color: #2a2e39;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .asset-btn.active { background-color: #2962FF; }
+
+        /* Код редактору */
+        #codeEditor {
             width: 100%;
+            height: 150px;
+            background-color: #131722;
+            color: #00ffcc;
+            border: 1px solid #2a2e39;
+            border-radius: 4px;
+            padding: 10px;
+            font-family: monospace;
+            font-size: 12px;
+            resize: none;
+        }
+        .apply-btn {
+            padding: 10px;
+            background-color: #26a69a;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .apply-btn:hover { background-color: #2bbbad; }
+
+        /* Оң жақ график аймағы */
+        #chart-container {
+            flex: 1;
             height: 100%;
+            position: relative;
         }
     </style>
 </head>
 <body>
-    <div id="chart"></div>
+
+    <!-- Сол жақ панель: Баптаулар және Индикатор коды -->
+    <div id="sidebar">
+        <h2>Ayan Terminal</h2>
+        
+        <div class="section-title">Активті таңдаңыз:</div>
+        <div class="btn-group">
+            <button class="asset-btn active" id="btnBtc" onclick="changeAsset('BTC')">BTC/USD</button>
+            <button class="asset-btn" id="btnGold" onclick="changeAsset('GOLD')">XAU/USD</button>
+        </div>
+
+        <div class="section-title">Индикатор коды (JavaScript формуласы):</div>
+        <div style="font-size: 11px; color: #848e9c;">Мысал: (item.high + item.low) / 2</div>
+        <textarea id="codeEditor">
+// Өз формулаңызды осы жерге жазыңыз:
+// item.open, item.high, item.low, item.close қолдана аласыз
+return (item.high + item.low) / 2;
+        </textarea>
+        <button class="apply-btn" onclick="applyIndicator()">Индикаторды қосу (Run)</button>
+    </div>
+
+    <!-- График тұратын орын -->
+    <div id="chart-container"></div>
 
     <script>
-        // 1. Графикті құру
-        const chart = LightweightCharts.createChart(document.getElementById('chart'), {
+        // Графикті инициализациялау
+        const chartContainer = document.getElementById('chart-container');
+        const chart = LightweightCharts.createChart(chartContainer, {
             layout: {
                 backgroundColor: '#131722',
                 textColor: '#d1d4dc',
             },
             grid: {
-                vertLines: { color: '#2B2B43' },
-                horzLines: { color: '#2B2B43' },
+                vertLines: { color: '#2b2b43' },
+                horzLines: { color: '#2b2b43' },
             },
             timeScale: {
                 timeVisible: true,
-                secondsVisible: false,
             },
         });
 
-        // 2. Жапон шамдарын (Candlesticks) қосу
         const candleSeries = chart.addCandlestickSeries({
-            upColor: '#26a69a',
-            downColor: '#ef5350',
-            borderVisible: false,
-            wickUpColor: '#26a69a',
-            wickDownColor: '#ef5350',
+            upColor: '#26a69a', downColor: '#ef5350',
+            borderVisible: false, wickUpColor: '#26a69a', wickDownColor: '#ef5350'
         });
 
-        // Тестілік баға деректері
-        const data = [
-            { time: '2026-10-01', open: 100, high: 110, low: 95, close: 105 },
-            { time: '2026-10-02', open: 105, high: 115, low: 100, close: 110 },
-            { time: '2026-10-03', open: 110, high: 120, low: 105, close: 108 },
-            { time: '2026-10-04', open: 108, high: 125, low: 106, close: 120 },
-            { time: '2026-10-05', open: 120, high: 130, low: 118, close: 125 },
-        ];
-        candleSeries.setData(data);
-
-        // 3. ӨЗІҢІЗДІҢ ЖЕКЕ ИНДИКАТОРЫҢЫЗДЫ ҚОСУ
         const lineSeries = chart.addLineSeries({
             color: '#2962FF',
             lineWidth: 2,
         });
 
-        // Баға негізінде индикатор формуласын есептеу (мысалы: орташа баға сызығы)
-        const indicatorData = data.map(item => ({
-            time: item.time,
-            value: (item.high + item.low) / 2 // Өзіңіздің кез келген математикалық формулаңыз
-        }));
+        // Деректер базасы (Мысал ретінде Bitcoin және Алтын деректері)
+        const btcData = [
+            { time: '2026-11-01', open: 65000, high: 67000, low: 64000, close: 66000 },
+            { time: '2026-11-02', open: 66000, high: 68500, low: 65500, close: 68000 },
+            { time: '2026-11-03', open: 68000, high: 69000, low: 67000, close: 67500 },
+            { time: '2026-11-04', open: 67500, high: 70000, low: 67000, close: 69500 },
+            { time: '2026-11-05', open: 69500, high: 71000, low: 69000, close: 70500 },
+        ];
 
-        lineSeries.setData(indicatorData);
+        const goldData = [
+            { time: '2026-11-01', open: 4050, high: 4100, low: 4030, close: 4080 },
+            { time: '2026-11-02', open: 4080, high: 4120, low: 4060, close: 4110 },
+            { time: '2026-11-03', open: 4110, high: 4150, low: 4090, close: 4100 },
+            { time: '2026-11-04', open: 4100, high: 4160, low: 4100, close: 4140 },
+            { time: '2026-11-05', open: 4140, high: 4190, low: 4130, close: 4170 },
+        ];
+
+        let currentData = btcData;
+        candleSeries.setData(currentData);
+        applyIndicator(); // Бастапқы индикаторды есептеу
+
+        // Активті ауыстыру функциясы
+        function changeAsset(asset) {
+            document.getElementById('btnBtc').classList.remove('active');
+            document.getElementById('btnGold').classList.remove('active');
+
+            if (asset === 'BTC') {
+                currentData = btcData;
+                document.getElementById('btnBtc').classList.add('active');
+            } else {
+                currentData = goldData;
+                document.getElementById('btnGold').classList.add('active');
+            }
+            candleSeries.setData(currentData);
+            applyIndicator();
+        }
+
+        // Қолданушы жазған кодты орындап, графикке сызу функциясы
+        function applyIndicator() {
+            const userCode = document.getElementById('codeEditor').value;
+            try {
+                // Кодты функция ретінде құрастыру
+                const customFormula = new Function('item', userCode);
+                
+                const indicatorResult = currentData.map(item => ({
+                    time: item.time,
+                    value: customFormula(item)
+                }));
+
+                lineSeries.setData(indicatorResult);
+            } catch (error) {
+                alert('Кодта қате бар: ' + error.message);
+            }
+        }
+
+        // Терезе өлшемі өзгергенде график өлшемін бейімдеу
+        window.addEventListener('resize', () => {
+            chart.resize(chartContainer.clientWidth, chartContainer.clientHeight);
+        });
     </script>
 </body>
 </html>
