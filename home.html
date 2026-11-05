@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ayan Trading Terminal</title>
+    <!-- Lightweight Charts кітапханасы -->
     <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -43,11 +44,12 @@
             border-color: #2962ff;
         }
 
-        /* График аймағы */
+        /* График орналасқан аймақ */
         #chart-container {
             width: 100%;
             height: calc(100vh - 268px);
             position: relative;
+            background-color: #131722;
         }
 
         /* Төменгі код редактор панели */
@@ -97,17 +99,17 @@
 </head>
 <body>
 
-    <!-- Активтерді таңдау -->
+    <!-- Активтерді ауыстыру батырмалары -->
     <div class="header">
         <button class="symbol-btn active" onclick="switchSymbol('BTCUSD')">BTC/USD</button>
         <button class="symbol-btn" onclick="switchSymbol('XAUUSD')">XAU/USD (Алтын)</button>
         <span id="current-symbol-title" style="margin-left: auto; font-weight: bold; color: #2962ff;">BTCUSD</span>
     </div>
 
-    <!-- График -->
+    <!-- График шығатын контейнер -->
     <div id="chart-container"></div>
 
-    <!-- Редактор -->
+    <!-- Индикатор жазатын редактор -->
     <div class="editor-panel">
         <div class="editor-header">
             <span>Индикатор редактору (JavaScript коду)</span>
@@ -128,6 +130,7 @@ smaSeries.setData(smaData);
     <script>
         let currentSymbol = 'BTCUSD';
         
+        // Нарық деректері (Свечалар)
         const marketData = {
             'BTCUSD': [
                 { time: '2026-11-01', open: 68000, high: 69500, low: 67500, close: 69000 },
@@ -149,25 +152,28 @@ smaSeries.setData(smaData);
 
         let candles = marketData[currentSymbol];
 
-        const chartElement = document.getElementById('chart-container');
-        
-        // Графикті құру (Логотипасыз және әдемі қара стильде)
-        const chart = LightweightCharts.createChart(chartElement, {
+        const container = document.getElementById('chart-container');
+
+        // TradingView стиліндегі қара график дизайнын жасау
+        const chart = LightweightCharts.createChart(container, {
+            width: container.clientWidth,
+            height: container.clientHeight,
             layout: {
                 backgroundColor: '#131722',
                 textColor: '#d1d4dc',
-                attributionLogo: false, // <-- «TV» логотипін толығымен өшіретін жол
+                attributionLogo: false, // TV логотипін өшіру
             },
             grid: {
                 vertLines: { color: '#2a2e39' },
                 horzLines: { color: '#2a2e39' },
             },
-            timeScale: { 
+            timeScale: {
                 borderColor: '#2a2e39',
                 timeVisible: true,
             },
         });
 
+        // Свеча сериясын қосу (Жасыл және Қызыл түстер)
         const candleSeries = chart.addCandlestickSeries({
             upColor: '#089981',
             downColor: '#f23645',
@@ -178,6 +184,7 @@ smaSeries.setData(smaData);
 
         candleSeries.setData(candles);
 
+        // Активті ауыстыру функциясы (BTC пен XAUUSD)
         function switchSymbol(symbol) {
             currentSymbol = symbol;
             document.getElementById('current-symbol-title').innerText = symbol;
@@ -188,8 +195,10 @@ smaSeries.setData(smaData);
 
             candles = marketData[symbol];
             candleSeries.setData(candles);
+            chart.timeScale().fitContent();
         }
 
+        // Пайдаланушы жазған индикатор кодын іске қосу
         function runCustomIndicator() {
             const userCode = document.getElementById('code-editor').value;
             try {
@@ -200,9 +209,13 @@ smaSeries.setData(smaData);
             }
         }
 
+        // Экран өлшемі өзгенде графикті автоматты түрде бейімдеу
         window.addEventListener('resize', () => {
-            chart.resize(chartElement.clientWidth, chartElement.clientHeight);
+            chart.resize(container.clientWidth, container.clientHeight);
         });
+
+        // Бастапқыда график масштабын туралау
+        chart.timeScale().fitContent();
     </script>
 </body>
 </html>
