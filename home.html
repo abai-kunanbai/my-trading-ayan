@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ayan Trading Platform</title>
-    <!-- Lightweight Charts кітапханасының сенімді нұсқасы -->
+    <!-- Lightweight Charts Кітапханасы -->
     <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
     <style>
         * { box-sizing: border-box; }
@@ -20,34 +20,60 @@
             overflow: hidden;
         }
         #sidebar {
-            width: 320px;
+            width: 340px;
             background-color: #1e222d;
             border-right: 1px solid #2a2e39;
             display: flex;
             flex-direction: column;
             padding: 15px;
-            gap: 15px;
+            gap: 12px;
             z-index: 10;
         }
-        h2 { font-size: 18px; margin: 0 0 10px 0; color: #2962FF; }
-        .section-title { font-size: 14px; font-weight: bold; margin-bottom: 5px; }
-        .btn-group { display: flex; gap: 10px; }
-        .asset-btn {
-            flex: 1; padding: 10px; background-color: #2a2e39; color: #fff;
-            border: none; border-radius: 4px; cursor: pointer; font-weight: bold;
+        h2 { font-size: 18px; margin: 0 0 5px 0; color: #2962FF; }
+        .section-title { font-size: 13px; font-weight: bold; margin-top: 5px; color: #848e9c; }
+        
+        .btn-group { display: flex; gap: 5px; flex-wrap: wrap; }
+        .asset-btn, .tf-btn {
+            flex: 1;
+            padding: 8px;
+            background-color: #2a2e39;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 12px;
         }
-        .asset-btn.active { background-color: #2962FF; }
+        .asset-btn.active, .tf-btn.active { background-color: #2962FF; }
+
         #codeEditor {
-            width: 100%; height: 150px; background-color: #131722; color: #00ffcc;
-            border: 1px solid #2a2e39; border-radius: 4px; padding: 10px;
-            font-family: monospace; font-size: 12px; resize: none;
+            width: 100%;
+            height: 120px;
+            background-color: #131722;
+            color: #00ffcc;
+            border: 1px solid #2a2e39;
+            border-radius: 4px;
+            padding: 8px;
+            font-family: monospace;
+            font-size: 12px;
+            resize: none;
         }
         .apply-btn {
-            padding: 10px; background-color: #26a69a; color: white;
-            border: none; border-radius: 4px; cursor: pointer; font-weight: bold;
+            padding: 10px;
+            background-color: #26a69a;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
         }
+        .apply-btn:hover { background-color: #2bbbad; }
+
         #chart-container {
-            flex: 1; height: 100%; position: relative; background-color: #131722;
+            flex: 1;
+            height: 100%;
+            position: relative;
+            background-color: #131722;
         }
     </style>
 </head>
@@ -55,12 +81,22 @@
 
     <div id="sidebar">
         <h2>Ayan Terminal</h2>
+        
         <div class="section-title">Активті таңдаңыз:</div>
         <div class="btn-group">
             <button class="asset-btn active" id="btnBtc" onclick="changeAsset('BTC')">BTC/USD</button>
             <button class="asset-btn" id="btnGold" onclick="changeAsset('GOLD')">XAU/USD</button>
         </div>
-        <div class="section-title">Индикатор коды (JS):</div>
+
+        <div class="section-title">Таймфрейм:</div>
+        <div class="btn-group">
+            <button class="tf-btn" onclick="changeTf('1m')">1m</button>
+            <button class="tf-btn" onclick="changeTf('15m')">15m</button>
+            <button class="tf-btn" onclick="changeTf('1h')">1h</button>
+            <button class="tf-btn active" onclick="changeTf('1D')">1D</button>
+        </div>
+
+        <div class="section-title">Индикатор коды (JS формуласы):</div>
         <textarea id="codeEditor">return (item.high + item.low) / 2;</textarea>
         <button class="apply-btn" onclick="applyIndicator()">Индикаторды қосу (Run)</button>
     </div>
@@ -69,19 +105,47 @@
 
     <script>
         const chartContainer = document.getElementById('chart-container');
+        
+        // Графикті құру және мышқамен масштабтау/жылжытуды қосу
         const chart = LightweightCharts.createChart(chartContainer, {
-            layout: { background: { type: 'solid', color: '#131722' }, textColor: '#d1d4dc' },
-            grid: { vertLines: { color: '#2b2b43' }, horzLines: { color: '#2b2b43' } },
-            timeScale: { timeVisible: true },
+            layout: { 
+                background: { type: 'solid', color: '#131722' }, 
+                textColor: '#d1d4dc' 
+            },
+            grid: { 
+                vertLines: { color: '#2b2b43' }, 
+                horzLines: { color: '#2b2b43' } 
+            },
+            timeScale: { 
+                timeVisible: true, 
+                secondsVisible: false 
+            },
+            handleScroll: {
+                mouseWheel: true,
+                pressedMouseMove: true,
+            },
+            handleScale: {
+                axisPressedMouseMove: true,
+                mouseWheel: true,
+                pinch: true,
+            },
         });
 
+        // Свечалар: Өскенде - жасыл, Түскенде - қызыл
         const candleSeries = chart.addCandlestickSeries({
-            upColor: '#26a69a', downColor: '#ef5350', borderVisible: false,
-            wickUpColor: '#26a69a', wickDownColor: '#ef5350'
+            upColor: '#26a69a',
+            downColor: '#ef5350',
+            borderVisible: false,
+            wickUpColor: '#26a69a',
+            wickDownColor: '#ef5350'
         });
 
-        const lineSeries = chart.addLineSeries({ color: '#2962FF', lineWidth: 2 });
+        const lineSeries = chart.addLineSeries({ 
+            color: '#2962FF', 
+            lineWidth: 2 
+        });
 
+        // Мысал деректер
         const btcData = [
             { time: '2026-11-01', open: 65000, high: 67000, low: 64000, close: 66000 },
             { time: '2026-11-02', open: 66000, high: 68500, low: 65500, close: 68000 },
@@ -110,29 +174,4 @@
                 document.getElementById('btnBtc').classList.add('active');
             } else {
                 currentData = goldData;
-                document.getElementById('btnGold').classList.add('active');
-            }
-            candleSeries.setData(currentData);
-            applyIndicator();
-        }
-
-        function applyIndicator() {
-            try {
-                const userCode = document.getElementById('codeEditor').value;
-                const customFormula = new Function('item', userCode);
-                const indicatorResult = currentData.map(item => ({
-                    time: item.time,
-                    value: customFormula(item)
-                }));
-                lineSeries.setData(indicatorResult);
-            } catch (error) {
-                alert('Қате: ' + error.message);
-            }
-        }
-
-        window.addEventListener('resize', () => {
-            chart.applyOptions({ width: chartContainer.clientWidth, height: chartContainer.clientHeight });
-        });
-    </script>
-</body>
-</html>
+                document.getElementById
