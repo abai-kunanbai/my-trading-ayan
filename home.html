@@ -10,14 +10,14 @@
         body {
             background-color: #131722;
             color: #d1d4dc;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             display: flex;
             flex-direction: column;
             height: 100vh;
             overflow: hidden;
         }
 
-        /* Үстүңкү панель (Header) */
+        /* Үстүңкү панель */
         .header {
             height: 48px;
             background-color: #1e222d;
@@ -45,7 +45,7 @@
             border-color: #2962ff;
         }
 
-        /* Негизги мазмун: График жана редактор */
+        /* Негизги график */
         .main-container {
             display: flex;
             flex-direction: column;
@@ -58,7 +58,7 @@
             position: relative;
         }
 
-        /* Төмөнкү код редактор панели */
+        /* Төменгі код редактор панели */
         .editor-panel {
             height: 220px;
             background-color: #1e222d;
@@ -105,18 +105,17 @@
 </head>
 <body>
 
-    <!-- Үстүңкү панель: Активдерди тандоо -->
+    <!-- Активтерді таңдау панелі -->
     <div class="header">
         <button class="symbol-btn active" onclick="switchSymbol('BTCUSD')">BTC/USD</button>
         <button class="symbol-btn" onclick="switchSymbol('XAUUSD')">XAU/USD (Алтын)</button>
         <span id="current-symbol-title" style="margin-left: auto; font-weight: bold; color: #2962ff;">BTCUSD</span>
     </div>
 
-    <!-- Негизги график -->
+    <!-- График және Редактор -->
     <div class="main-container">
         <div id="chart-container"></div>
 
-        <!-- Код жазуу панели (Pine Script ордуна JS) -->
         <div class="editor-panel">
             <div class="editor-header">
                 <span>Индикатор редактору (JavaScript Коду)</span>
@@ -137,10 +136,30 @@ smaSeries.setData(smaData);
 
     <script>
         let currentSymbol = 'BTCUSD';
-        let candles = [];
-        let indicatorSeriesList = [];
+        
+        // Деректерді тікелей осында сақтаймыз (Интернетте де, серверсіз де мінсіз жұмыс істейді)
+        const marketData = {
+            'BTCUSD': [
+                { time: '2026-11-01', open: 68000, high: 69500, low: 67500, close: 69000 },
+                { time: '2026-11-02', open: 69000, high: 71000, low: 68500, close: 70500 },
+                { time: '2026-11-03', open: 70500, high: 70800, low: 69000, close: 69800 },
+                { time: '2026-11-04', open: 69800, high: 72000, low: 69500, close: 71800 },
+                { time: '2026-11-05', open: 71800, high: 73500, low: 71200, close: 73000 },
+                { time: '2026-11-06', open: 73000, high: 74200, low: 72500, close: 74000 }
+            ],
+            'XAUUSD': [
+                { time: '2026-11-01', open: 2710, high: 2730, low: 2700, close: 2725 },
+                { time: '2026-11-02', open: 2725, high: 2745, low: 2720, close: 2740 },
+                { time: '2026-11-03', open: 2740, high: 2750, low: 2710, close: 2715 },
+                { time: '2026-11-04', open: 2715, high: 2735, low: 2710, close: 2730 },
+                { time: '2026-11-05', open: 2730, high: 2760, low: 2725, close: 2755 },
+                { time: '2026-11-06', open: 2755, high: 2780, low: 2750, close: 2775 }
+            ]
+        };
 
-        // 1. Графикти түзүү (TradingView Dark Style)
+        let candles = marketData[currentSymbol];
+
+        // Графикті құру
         const chartElement = document.getElementById('chart-container');
         const chart = LightweightCharts.createChart(chartElement, {
             layout: {
@@ -162,46 +181,27 @@ smaSeries.setData(smaData);
             wickDownColor: '#f23645',
         });
 
-        // 2. Python Серверден маалымат алуу
-        async function fetchCandles(symbol) {
-            try {
-                // Серверге активдин атын жөнөтөбүз
-                const response = await fetch(`http://127.0.0.1:8000/api/candles?symbol=${symbol}`);
-                if (!response.ok) throw new Error('Серверден ката келди');
-                candles = await response.json();
-                candleSeries.setData(candles);
-            } catch (err) {
-                console.warn('Python серверге туташпады, тесттик маалыматтар колдонулууда');
-                // Сервер өчүк болсо убактылуу тест маалымат:
-                candles = [
-                    { time: '2026-11-01', open: 2700, high: 2720, low: 2690, close: 2715 },
-                    { time: '2026-11-02', open: 2715, high: 2740, low: 2710, close: 2730 },
-                    { time: '2026-11-03', open: 2730, high: 2735, low: 2680, close: 2695 },
-                    { time: '2026-11-04', open: 2695, high: 2725, low: 2690, close: 2720 },
-                    { time: '2026-11-05', open: 2720, high: 2750, low: 2715, close: 2745 },
-                ];
-                candleSeries.setData(candles);
-            }
-        }
+        // Бастапқы мәліметті жүктеу
+        candleSeries.setData(candles);
 
-        // 3. Активди которуу функциясы
+        // Активті ауыстыру (BTC / XAU)
         function switchSymbol(symbol) {
             currentSymbol = symbol;
             document.getElementById('current-symbol-title').innerText = symbol;
             
-            // Баскычтардын стилин жаңыртуу
+            // Баскычтардың түсін өзгерту
             document.querySelectorAll('.symbol-btn').forEach(btn => {
                 btn.classList.toggle('active', btn.innerText.includes(symbol.slice(0, 3)));
             });
 
-            fetchCandles(symbol);
+            candles = marketData[symbol];
+            candleSeries.setData(candles);
         }
 
-        // 4. Төмөнкү код редакторундагы индикатор кодун иштетүү
+        // Индикатор кодын іске қосу
         function runCustomIndicator() {
             const userCode = document.getElementById('code-editor').value;
             try {
-                // Кодду коопсуз иштетүү
                 const runCode = new Function('chart', 'candles', userCode);
                 runCode(chart, candles);
             } catch (e) {
@@ -209,13 +209,10 @@ smaSeries.setData(smaData);
             }
         }
 
-        // Экран өлчөмү өзгөргөндө графикти тууралоо
+        // Экран өлшемі өзгергенде графикті бейімдеу
         window.addEventListener('resize', () => {
             chart.resize(chartElement.clientWidth, chartElement.clientHeight);
         });
-
-        // Баштапкы жүктөлүшү
-        fetchCandles(currentSymbol);
     </script>
 </body>
 </html>
