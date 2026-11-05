@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="kk">
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -17,7 +17,7 @@
             overflow: hidden;
         }
 
-        /* Үстүңкү панель */
+        /* Верхняя панель */
         .header {
             height: 48px;
             background-color: #1e222d;
@@ -45,7 +45,7 @@
             border-color: #2962ff;
         }
 
-        /* Негизги график */
+        /* Область графика */
         .main-container {
             display: flex;
             flex-direction: column;
@@ -58,7 +58,7 @@
             position: relative;
         }
 
-        /* Төменгі код редактор панели */
+        /* Панель редактора кода */
         .editor-panel {
             height: 220px;
             background-color: #1e222d;
@@ -82,7 +82,7 @@
             background-color: #089981;
             color: white;
             border: none;
-            padding: 4px 12px;
+            padding: 5px 14px;
             border-radius: 4px;
             font-weight: bold;
             cursor: pointer;
@@ -95,7 +95,7 @@
             background-color: #1e222d;
             color: #d1d4dc;
             border: none;
-            padding: 10px;
+            padding: 12px;
             font-family: 'Courier New', Courier, monospace;
             font-size: 13px;
             resize: none;
@@ -105,24 +105,24 @@
 </head>
 <body>
 
-    <!-- Активтерді таңдау панелі -->
+    <!-- Шапка: Переключение активов -->
     <div class="header">
         <button class="symbol-btn active" onclick="switchSymbol('BTCUSD')">BTC/USD</button>
-        <button class="symbol-btn" onclick="switchSymbol('XAUUSD')">XAU/USD (Алтын)</button>
+        <button class="symbol-btn" onclick="switchSymbol('XAUUSD')">XAU/USD (Золото)</button>
         <span id="current-symbol-title" style="margin-left: auto; font-weight: bold; color: #2962ff;">BTCUSD</span>
     </div>
 
-    <!-- График және Редактор -->
+    <!-- График и Редактор -->
     <div class="main-container">
         <div id="chart-container"></div>
 
         <div class="editor-panel">
             <div class="editor-header">
-                <span>Индикатор редактору (JavaScript Коду)</span>
-                <button class="run-btn" onclick="runCustomIndicator()">Индикаторду Кошуу</button>
+                <span>Редактор индикаторов (JavaScript код)</span>
+                <button class="run-btn" onclick="runCustomIndicator()">Добавить индикатор</button>
             </div>
-            <textarea id="code-editor" placeholder="// Индикатор кодун ушул жерге жазыңыз
-// Мисалы (SMA 3-мезгил):
+            <textarea id="code-editor" placeholder="// Введите код вашего индикатора здесь
+// Пример расчета скользящей средней (SMA 3):
 const smaData = [];
 for (let i = 2; i < candles.length; i++) {
     const avg = (candles[i].close + candles[i-1].close + candles[i-2].close) / 3;
@@ -137,7 +137,7 @@ smaSeries.setData(smaData);
     <script>
         let currentSymbol = 'BTCUSD';
         
-        // Деректерді тікелей осында сақтаймыз (Интернетте де, серверсіз де мінсіз жұмыс істейді)
+        // Встроенные данные свечей
         const marketData = {
             'BTCUSD': [
                 { time: '2026-11-01', open: 68000, high: 69500, low: 67500, close: 69000 },
@@ -159,7 +159,7 @@ smaSeries.setData(smaData);
 
         let candles = marketData[currentSymbol];
 
-        // Графикті құру
+        // Инициализация графиков
         const chartElement = document.getElementById('chart-container');
         const chart = LightweightCharts.createChart(chartElement, {
             layout: {
@@ -181,15 +181,14 @@ smaSeries.setData(smaData);
             wickDownColor: '#f23645',
         });
 
-        // Бастапқы мәліметті жүктеу
+        // Загрузка начальных данных
         candleSeries.setData(candles);
 
-        // Активті ауыстыру (BTC / XAU)
+        // Переключение торговой пары
         function switchSymbol(symbol) {
             currentSymbol = symbol;
             document.getElementById('current-symbol-title').innerText = symbol;
             
-            // Баскычтардың түсін өзгерту
             document.querySelectorAll('.symbol-btn').forEach(btn => {
                 btn.classList.toggle('active', btn.innerText.includes(symbol.slice(0, 3)));
             });
@@ -198,18 +197,18 @@ smaSeries.setData(smaData);
             candleSeries.setData(candles);
         }
 
-        // Индикатор кодын іске қосу
+        // Запуск пользовательского кода индикатора
         function runCustomIndicator() {
             const userCode = document.getElementById('code-editor').value;
             try {
                 const runCode = new Function('chart', 'candles', userCode);
                 runCode(chart, candles);
             } catch (e) {
-                alert('Индикатор кодунда ката бар: ' + e.message);
+                alert('Ошибка в коде индикатора: ' + e.message);
             }
         }
 
-        // Экран өлшемі өзгергенде графикті бейімдеу
+        // Автоматическая подстройка размера при изменении окна
         window.addEventListener('resize', () => {
             chart.resize(chartElement.clientWidth, chartElement.clientHeight);
         });
