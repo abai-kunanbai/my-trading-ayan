@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trading Terminal - Ayan</title>
+    <title>Ayan Trading Platform</title>
+    <!-- TradingView Lightweight Charts Кітапханасы -->
+    <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
     <style>
         html, body {
             margin: 0;
@@ -13,37 +15,64 @@
             background-color: #131722;
             overflow: hidden;
         }
-        .tradingview-widget-container {
-            width: 100%;
-            height: 100%;
-        }
-        .tradingview-widget-container__widget {
+        #chart {
             width: 100%;
             height: 100%;
         }
     </style>
 </head>
 <body>
-    <!-- TradingView Widget BEGIN -->
-    <div class="tradingview-widget-container">
-      <div class="tradingview-widget-container__widget"></div>
-      <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>
-      {
-        "autosize": true,
-        "symbol": "XAUUSD",
-        "interval": "30",
-        "timezone": "Etc/UTC",
-        "theme": "dark",
-        "style": "1",
-        "locale": "kk",
-        "enable_publishing": false,
-        "hide_top_toolbar": false,
-        "allow_symbol_change": true,
-        "save_image": false,
-        "support_host": "https://www.tradingview.com"
-      }
-      </script>
-    </div>
-    <!-- TradingView Widget END -->
+    <div id="chart"></div>
+
+    <script>
+        // 1. Графикті құру
+        const chart = LightweightCharts.createChart(document.getElementById('chart'), {
+            layout: {
+                backgroundColor: '#131722',
+                textColor: '#d1d4dc',
+            },
+            grid: {
+                vertLines: { color: '#2B2B43' },
+                horzLines: { color: '#2B2B43' },
+            },
+            timeScale: {
+                timeVisible: true,
+                secondsVisible: false,
+            },
+        });
+
+        // 2. Жапон шамдарын (Candlesticks) қосу
+        const candleSeries = chart.addCandlestickSeries({
+            upColor: '#26a69a',
+            downColor: '#ef5350',
+            borderVisible: false,
+            wickUpColor: '#26a69a',
+            wickDownColor: '#ef5350',
+        });
+
+        // Тестілік баға деректері
+        const data = [
+            { time: '2026-10-01', open: 100, high: 110, low: 95, close: 105 },
+            { time: '2026-10-02', open: 105, high: 115, low: 100, close: 110 },
+            { time: '2026-10-03', open: 110, high: 120, low: 105, close: 108 },
+            { time: '2026-10-04', open: 108, high: 125, low: 106, close: 120 },
+            { time: '2026-10-05', open: 120, high: 130, low: 118, close: 125 },
+        ];
+        candleSeries.setData(data);
+
+        // 3. ӨЗІҢІЗДІҢ ЖЕКЕ ИНДИКАТОРЫҢЫЗДЫ ҚОСУ
+        const lineSeries = chart.addLineSeries({
+            color: '#2962FF',
+            lineWidth: 2,
+        });
+
+        // Баға негізінде индикатор формуласын есептеу (мысалы: орташа баға сызығы)
+        const indicatorData = data.map(item => ({
+            time: item.time,
+            value: (item.high + item.low) / 2 // Өзіңіздің кез келген математикалық формулаңыз
+        }));
+
+        lineSeries.setData(indicatorData);
+    </script>
 </body>
 </html>
