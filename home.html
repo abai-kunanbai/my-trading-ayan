@@ -236,6 +236,7 @@ function run(){
     const fn=new Function('candles','ta',store('code')||DEF);
     out=fn(candles,TA)||{};$('err').textContent='';
   }catch(e){out={};$('err').textContent='Код қатесі: '+e.message}
+  try{series.setMarkers((out.markers||[]).slice().sort((a,b)=>a.time-b.time))}catch(e){}
   panel();
 }
 function panel(){
