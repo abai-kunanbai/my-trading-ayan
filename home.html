@@ -1,221 +1,228 @@
 <!DOCTYPE html>
 <html lang="kk">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ayan Trading Terminal</title>
-    <!-- Lightweight Charts кітапханасы -->
-    <script src="https://cdn.jsdelivr.net/npm/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js"></script>
-    <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body {
-            background-color: #131722;
-            color: #d1d4dc;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            height: 100vh;
-            overflow: hidden;
-        }
-
-        /* Үстүңкү панель */
-        .header {
-            height: 48px;
-            background-color: #1e222d;
-            border-bottom: 1px solid #2a2e39;
-            display: flex;
-            align-items: center;
-            padding: 0 16px;
-            gap: 12px;
-        }
-
-        .symbol-btn {
-            background-color: #2a2e39;
-            color: #f0b90b;
-            border: 1px solid #363c4e;
-            padding: 6px 14px;
-            border-radius: 4px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: 0.2s;
-        }
-
-        .symbol-btn:hover, .symbol-btn.active {
-            background-color: #2962ff;
-            color: #fff;
-            border-color: #2962ff;
-        }
-
-        /* График орналасқан аймақ */
-        #chart-container {
-            width: 100%;
-            height: calc(100vh - 268px);
-            position: relative;
-            background-color: #131722;
-        }
-
-        /* Төменгі код редактор панели */
-        .editor-panel {
-            height: 220px;
-            background-color: #1e222d;
-            border-top: 2px solid #2a2e39;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .editor-header {
-            height: 36px;
-            background-color: #131722;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 16px;
-            font-size: 13px;
-            color: #787b86;
-        }
-
-        .run-btn {
-            background-color: #089981;
-            color: white;
-            border: none;
-            padding: 5px 14px;
-            border-radius: 4px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-
-        .run-btn:hover { background-color: #067a67; }
-
-        #code-editor {
-            flex: 1;
-            background-color: #1e222d;
-            color: #d1d4dc;
-            border: none;
-            padding: 12px;
-            font-family: 'Courier New', Courier, monospace;
-            font-size: 13px;
-            resize: none;
-            outline: none;
-        }
-    </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ayan Trading Terminal</title>
+<style>
+:root{--bg:#000;--p:#0f131a;--b:#222a36;--t:#e8edf3;--m:#8794a6;--gold:#e0a93b}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--t);font:14px/1.4 system-ui,-apple-system,"Segoe UI",sans-serif;display:grid;grid-template-columns:1fr 380px}
+main{display:flex;flex-direction:column;min-width:0;height:100vh}
+.bar{display:flex;gap:6px;padding:8px 10px;border-bottom:1px solid var(--b);flex-wrap:wrap;align-items:center;background:var(--p)}
+.bar .sp{flex:1}
+#price{font-weight:600;font-variant-numeric:tabular-nums}
+button{background:#161c26;color:var(--t);border:1px solid var(--b);padding:5px 11px;border-radius:6px;cursor:pointer;font:inherit}
+button:hover{border-color:var(--m)}
+button.on{background:var(--gold);border-color:var(--gold);color:#1a1405;font-weight:600}
+#wrap{position:relative;flex:1;min-height:0}
+#chart,#ov{position:absolute;inset:0}
+#ov{pointer-events:none}
+#lg{position:absolute;left:10px;top:8px;z-index:3;font-size:12.5px;color:var(--m);pointer-events:none;font-variant-numeric:tabular-nums}
+aside{border-left:1px solid var(--b);background:var(--p);display:flex;flex-direction:column;gap:8px;overflow:auto;padding:12px;height:100vh}
+h2{font-size:13px;margin:6px 0 0;color:var(--m);font-weight:600}
+table{width:100%;border-collapse:collapse}
+td{padding:4px 6px;border-bottom:1px solid var(--b);font-size:12.5px;vertical-align:top}
+td:first-child{color:var(--m);white-space:nowrap}
+textarea{width:100%;background:#05070a;color:var(--t);border:1px solid var(--b);border-radius:6px;font:12px/1.45 ui-monospace,Menlo,Consolas,monospace;padding:8px;resize:vertical}
+#code{height:260px;tab-size:2}
+#notes{height:100px;font-family:inherit;font-size:13px}
+#err{color:#f47067;font-size:12px;min-height:1em;white-space:pre-wrap}
+small{color:var(--m)}
+@media(max-width:860px){body{grid-template-columns:1fr}main{height:65vh}aside{height:auto;border-left:0;border-top:1px solid var(--b)}}
+</style>
 </head>
 <body>
+<main>
+  <div class="bar"><span id="bs"></span><span id="bt"></span><span class="sp"></span><span id="price"></span></div>
+  <div id="wrap"><div id="lg"></div><div id="chart"></div><canvas id="ov"></canvas></div>
+</main>
+<aside>
+  <h2>Талдау панелі</h2>
+  <table id="panel"></table>
+  <h2>Индикатор коды (JavaScript)</h2>
+  <textarea id="code" spellcheck="false"></textarea>
+  <div><button id="run">Іске қосу</button> <button id="reset">Әдепкі код</button></div>
+  <div id="err"></div>
+  <h2>Идеялар мен жазбалар</h2>
+  <textarea id="notes" placeholder="Идея, сценарий, ескертпе..."></textarea>
+  <small>Код тек осы браузерде орындалады. Өз кодыңызды ғана қойыңыз. Қаржылық кеңес емес.</small>
+</aside>
 
-    <!-- Активтерді ауыстыру батырмалары -->
-    <div class="header">
-        <button class="symbol-btn active" onclick="switchSymbol('BTCUSD')">BTC/USD</button>
-        <button class="symbol-btn" onclick="switchSymbol('XAUUSD')">XAU/USD (Алтын)</button>
-        <span id="current-symbol-title" style="margin-left: auto; font-weight: bold; color: #2962ff;">BTCUSD</span>
-    </div>
+<script src="https://cdn.jsdelivr.net/npm/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js"></script>
+<script>
+const $=id=>document.getElementById(id);
+const SYMS={BTC:'BTCUSDT','Алтын (PAXG)':'PAXGUSDT'},TFS=['1m','3m','5m','15m','1h','4h'];
+const HOSTS=['https://data-api.binance.vision','https://api.binance.com'];
+let sym='BTC',tf='5m',candles=[],ws=null,out={};
+const store=(k,v)=>v===undefined?localStorage.getItem(k):localStorage.setItem(k,v);
 
-    <!-- График шығатын контейнер -->
-    <div id="chart-container"></div>
+const TA={
+  atr:(c,n=14)=>{const a=[];let s=0;c.forEach((x,i)=>{const tr=i?Math.max(x.high-x.low,Math.abs(x.high-c[i-1].close),Math.abs(x.low-c[i-1].close)):x.high-x.low;a.push(i<n?(s+=tr,s/(i+1)):(a[i-1]*(n-1)+tr)/n)});return a},
+  ema:(v,n)=>{const k=2/(n+1),e=[];v.forEach((x,i)=>e.push(i?x*k+e[i-1]*(1-k):x));return e},
+  rsi:(v,n=14)=>{let g=0,l=0;const r=[];v.forEach((x,i)=>{if(!i){r.push(50);return}const d=x-v[i-1],u=Math.max(d,0),w=Math.max(-d,0);if(i<=n){g+=u/n;l+=w/n}else{g=(g*(n-1)+u)/n;l=(l*(n-1)+w)/n}r.push(l?100-100/(1+g/l):100)});return r}
+};
 
-    <!-- Индикатор жазатын редактор -->
-    <div class="editor-panel">
-        <div class="editor-header">
-            <span>Индикатор редактору (JavaScript коду)</span>
-            <button class="run-btn" onclick="runCustomIndicator()">Индикаторды қосу</button>
-        </div>
-        <textarea id="code-editor" placeholder="// Индикатор кодын осында жазыңыз
-// Мысалы (SMA 3):
-const smaData = [];
-for (let i = 2; i < candles.length; i++) {
-    const avg = (candles[i].close + candles[i-1].close + candles[i-2].close) / 3;
-    smaData.push({ time: candles[i].time, value: avg });
+const DEF=`// Индикатор функциясы: candles (шамдар) және ta (формулалар) алады.
+// Қайтаратыны: {zones, lines, panel}
+//  zones: [{from(уақыт), top, bottom, color, label}]
+//  lines: [{t1,p1,t2,p2,color,half}]
+//  panel: [[атауы, мәні, түсі]]
+const L=10,n=candles.length;
+if(n<60)return{panel:[['Күту','Дерек аз']]};
+const A=ta.atr(candles),cl=candles.map(c=>c.close),E=ta.ema(cl,50),R=ta.rsi(cl);
+const last=candles[n-1],atr=A[n-1],calc=atr*.5,half=atr*.2;
+const ph=[],pl=[];
+for(let i=L;i<n-L;i++){let a=1,b=1;for(let j=i-L;j<=i+L;j++){if(candles[j].high>candles[i].high)a=0;if(candles[j].low<candles[i].low)b=0}if(a)ph.push(i);if(b)pl.push(i)}
+const SH=new Set(ph),SL=new Set(pl),res=[],sup=[],st={h:0,t:0};
+const add=(ls,p,t,a)=>{const z=ls.find(z=>!z.dead&&Math.abs(z.p-p)<a);if(z){if(z.armed){z.x++;z.armed=false}}else ls.push({p,t,x:1,armed:false,dead:false})};
+const test=(k,z,dir)=>{const a=A[k];for(let j=k+1;j<Math.min(k+30,n);j++){const c=candles[j];const held=dir>0?c.low<=z.p-a:c.high>=z.p+a;const brk=dir>0?c.high>=z.p+a:c.low<=z.p-a;if(held||brk){st.t++;if(held&&!brk)st.h++;return}}};
+for(let k=0;k<n;k++){
+  const c=candles[k],a=A[k],i=k-L;
+  if(i>=L){if(SH.has(i))add(res,candles[i].high,candles[i].time,a);if(SL.has(i))add(sup,candles[i].low,candles[i].time,a)}
+  for(const z of res){if(z.dead)continue;if(c.close>z.p+a){z.dead=true;continue}if(!z.armed&&c.close<z.p-a)z.armed=true;if(z.armed&&c.high>=z.p-a*.5&&c.close<z.p){z.x++;z.armed=false;test(k,z,1)}}
+  for(const z of sup){if(z.dead)continue;if(c.close<z.p-a){z.dead=true;continue}if(!z.armed&&c.close>z.p+a)z.armed=true;if(z.armed&&c.low<=z.p+a*.5&&c.close>z.p){z.x++;z.armed=false;test(k,z,-1)}}
 }
-const smaSeries = chart.addLineSeries({ color: '#f0b90b', lineWidth: 2 });
-smaSeries.setData(smaData);
-"></textarea>
-    </div>
+const alive=ls=>ls.filter(z=>!z.dead&&Math.abs(z.p-last.close)<=atr*8);
+const rz=alive(res),sz=alive(sup);
+const nR=rz.filter(z=>z.p>=last.close).sort((a,b)=>a.p-b.p)[0];
+const nS=sz.filter(z=>z.p<=last.close).sort((a,b)=>b.p-a.p)[0];
+const zones=[
+  ...rz.map(z=>({from:z.t,top:z.p+half,bottom:z.p-half,color:z.x>=3?'#d946ef':'#f85149',label:'x'+z.x+(z.x>=3?' ★':'')})),
+  ...sz.map(z=>({from:z.t,top:z.p+half,bottom:z.p-half,color:z.x>=3?'#3b82f6':'#3fb950',label:'x'+z.x+(z.x>=3?' ★':'')}))
+];
+const lines=[],tl=[];
+if(ph.length>1){const i2=ph[ph.length-1],i1=ph[ph.length-2],p1=candles[i1].high,p2=candles[i2].high;
+  if(p2<p1){const v=p2+(p2-p1)/(i2-i1)*(n-1-i2);
+    if(last.close<=v+atr*.7){lines.push({t1:candles[i1].time,p1,t2:candles[i2].time,p2,color:'#f0883e',half});tl.push('Қарсылық '+v.toFixed(2))}
+    else tl.push('Қарсылық бұзылды ↑')}}
+if(pl.length>1){const i2=pl[pl.length-1],i1=pl[pl.length-2],p1=candles[i1].low,p2=candles[i2].low;
+  if(p2>p1){const v=p2+(p2-p1)/(i2-i1)*(n-1-i2);
+    if(last.close>=v-atr*.7){lines.push({t1:candles[i1].time,p1,t2:candles[i2].time,p2,color:'#22d3ee',half});tl.push('Қолдау '+v.toFixed(2))}
+    else tl.push('Қолдау бұзылды ↓')}}
+const rsi=R[n-1],tr=last.close>E[n-1]?'Жоғары':'Төмен';
+const dR=nR?nR.p-last.close:1e9,dS=nS?last.close-nS.p:1e9;
+let v='Күту: зонаға жетпеген';
+if(dR<=calc)v=(nR.x>=2&&rsi>55)?'Төмен қайту мүмкін':'Қарсылық зонасында, растау күтіңіз';
+else if(dS<=calc)v=(nS.x>=2&&rsi<45)?'Жоғары қайту мүмкін':'Қолдау зонасында, растау күтіңіз';
+else if(dR<=atr)v='Қарсылыққа жақын (x'+nR.x+')';
+else if(dS<=atr)v='Қолдауға жақын (x'+nS.x+')';
+return{zones,lines,panel:[
+  ['Тренд (EMA50)',tr,tr=='Жоғары'?'#3fb950':'#f85149'],
+  ['RSI',rsi.toFixed(1)],
+  ['Жақын қарсылық',nR?nR.p.toFixed(2)+' (x'+nR.x+')':'жоқ','#f47067'],
+  ['Жақын қолдау',nS?nS.p.toFixed(2)+' (x'+nS.x+')':'жоқ','#57ab5a'],
+  ['Трендлайн',tl.join(' | ')||'жоқ'],
+  ['Қорытынды',v,'#e0a93b'],
+  ['Зонадан қайту (тарих)',st.t?Math.round(st.h/st.t*100)+'% (n='+st.t+')':'дерек аз']
+]};`;
 
-    <script>
-        let currentSymbol = 'BTCUSD';
-        
-        // Нарық деректері (Свечалар)
-        const marketData = {
-            'BTCUSD': [
-                { time: '2026-11-01', open: 68000, high: 69500, low: 67500, close: 69000 },
-                { time: '2026-11-02', open: 69000, high: 71000, low: 68500, close: 70500 },
-                { time: '2026-11-03', open: 70500, high: 70800, low: 69000, close: 69800 },
-                { time: '2026-11-04', open: 69800, high: 72000, low: 69500, close: 71800 },
-                { time: '2026-11-05', open: 71800, high: 73500, low: 71200, close: 73000 },
-                { time: '2026-11-06', open: 73000, high: 74200, low: 72500, close: 74000 }
-            ],
-            'XAUUSD': [
-                { time: '2026-11-01', open: 2710, high: 2730, low: 2700, close: 2725 },
-                { time: '2026-11-02', open: 2725, high: 2745, low: 2720, close: 2740 },
-                { time: '2026-11-03', open: 2740, high: 2750, low: 2710, close: 2715 },
-                { time: '2026-11-04', open: 2715, high: 2735, low: 2710, close: 2730 },
-                { time: '2026-11-05', open: 2730, high: 2760, low: 2725, close: 2755 },
-                { time: '2026-11-06', open: 2755, high: 2780, low: 2750, close: 2775 }
-            ]
-        };
+const chart=LightweightCharts.createChart($('chart'),{
+  autoSize:true,
+  layout:{background:{color:'#000000'},textColor:'#aab4c3'},
+  grid:{vertLines:{color:'#14181f'},horzLines:{color:'#14181f'}},
+  crosshair:{mode:0},
+  timeScale:{timeVisible:true,rightOffset:25,borderColor:'#222a36'},
+  rightPriceScale:{borderColor:'#222a36'}
+});
+const series=chart.addCandlestickSeries({upColor:'#26a69a',downColor:'#ef5350',borderVisible:false,wickUpColor:'#26a69a',wickDownColor:'#ef5350'});
+const vol=chart.addHistogramSeries({priceFormat:{type:'volume'},priceScaleId:'vol'});
+chart.priceScale('vol').applyOptions({scaleMargins:{top:.85,bottom:0}});
+const vcol=c=>c.close>=c.open?'#26a69a55':'#ef535055';
+const vdata=c=>({time:c.time,value:c.volume,color:vcol(c)});
 
-        let candles = marketData[currentSymbol];
+chart.subscribeCrosshairMove(p=>{
+  const d=p.seriesData&&p.seriesData.get(series),lg=$('lg');
+  if(!d){lg.textContent=Object.keys(SYMS).find(k=>k===sym)+' · '+tf;return}
+  lg.textContent=sym+' · '+tf+'   O '+d.open+'  H '+d.high+'  L '+d.low+'  C '+d.close;
+});
 
-        const container = document.getElementById('chart-container');
+async function fetchKlines(){
+  let err;
+  for(const h of HOSTS){
+    try{
+      const r=await fetch(h+'/api/v3/klines?symbol='+SYMS[sym]+'&interval='+tf+'&limit=1000');
+      if(!r.ok)throw new Error('HTTP '+r.status);
+      return r.json();
+    }catch(e){err=e}
+  }
+  throw err;
+}
+async function load(){
+  $('err').textContent='';
+  try{
+    const k=await fetchKlines();
+    candles=k.map(x=>({time:x[0]/1000,open:+x[1],high:+x[2],low:+x[3],close:+x[4],volume:+x[5]}));
+  }catch(e){$('err').textContent='Деректер жүктелмеді: '+e.message+'. Binance қолжетімсіз болуы мүмкін (VPN қосып көріңіз).';return}
+  series.setData(candles);vol.setData(candles.map(vdata));
+  $('price').textContent=candles[candles.length-1].close;
+  run();live();
+}
+function live(){
+  if(ws){ws.onmessage=null;ws.close()}
+  ws=new WebSocket('wss://data-stream.binance.vision/ws/'+SYMS[sym].toLowerCase()+'@kline_'+tf);
+  ws.onmessage=e=>{
+    const k=JSON.parse(e.data).k,c={time:k.t/1000,open:+k.o,high:+k.h,low:+k.l,close:+k.c,volume:+k.v};
+    const l=candles[candles.length-1];
+    if(l&&l.time===c.time)candles[candles.length-1]=c;else candles.push(c);
+    series.update(c);vol.update(vdata(c));$('price').textContent=c.close;
+    if(k.x)run();
+  };
+}
 
-        // TradingView стиліндегі қара график дизайнын жасау
-        const chart = LightweightCharts.createChart(container, {
-            width: container.clientWidth,
-            height: container.clientHeight,
-            layout: {
-                backgroundColor: '#131722',
-                textColor: '#d1d4dc',
-                attributionLogo: false, // TV логотипін өшіру
-            },
-            grid: {
-                vertLines: { color: '#2a2e39' },
-                horzLines: { color: '#2a2e39' },
-            },
-            timeScale: {
-                borderColor: '#2a2e39',
-                timeVisible: true,
-            },
-        });
+function run(){
+  try{
+    const fn=new Function('candles','ta',store('code')||DEF);
+    out=fn(candles,TA)||{};$('err').textContent='';
+  }catch(e){out={};$('err').textContent='Код қатесі: '+e.message}
+  panel();
+}
+function panel(){
+  const t=$('panel');t.innerHTML='';
+  (out.panel||[]).forEach(([k,v,c])=>{const r=t.insertRow();r.insertCell().textContent=k;const d=r.insertCell();d.textContent=v;if(c)d.style.color=c});
+}
 
-        // Свеча сериясын қосу (Жасыл және Қызыл түстер)
-        const candleSeries = chart.addCandlestickSeries({
-            upColor: '#089981',
-            downColor: '#f23645',
-            borderVisible: false,
-            wickUpColor: '#089981',
-            wickDownColor: '#f23645',
-        });
+let cw=0,ch=0;
+function draw(){
+  const cv=$('ov'),w=$('wrap'),d=window.devicePixelRatio||1,W=w.clientWidth,H=w.clientHeight;
+  if(W!==cw||H!==ch){cw=W;ch=H;cv.width=W*d;cv.height=H*d;cv.style.width=W+'px';cv.style.height=H+'px'}
+  const g=cv.getContext('2d');g.setTransform(d,0,0,d,0,0);g.clearRect(0,0,W,H);
+  const ts=chart.timeScale(),X=t=>ts.timeToCoordinate(t),Y=p=>series.priceToCoordinate(p);
+  g.font='11px system-ui,sans-serif';
+  for(const z of out.zones||[]){
+    const y1=Y(z.top),y2=Y(z.bottom);if(y1==null||y2==null)continue;
+    const x0=Math.max(X(z.from)??0,0);
+    g.fillStyle=z.color+'55';g.fillRect(x0,y1,W-x0,y2-y1);
+    g.strokeStyle=z.color;g.lineWidth=1;g.strokeRect(x0,y1,W-x0,y2-y1);
+    if(z.label){g.fillStyle='#fff';g.fillText(z.label,W-95,y1-3)}
+  }
+  for(const l of out.lines||[]){
+    const x1=X(l.t1),x2=X(l.t2),y1=Y(l.p1),y2=Y(l.p2);
+    if([x1,x2,y1,y2].some(v=>v==null)||x1===x2)continue;
+    const s=(y2-y1)/(x2-x1),ye=y1+s*(W-x1),yh=Y(l.p1+(l.half||0)),hp=yh==null?3:Math.abs(y1-yh);
+    g.fillStyle=l.color+'44';g.strokeStyle=l.color;
+    g.beginPath();g.moveTo(x1,y1-hp);g.lineTo(W,ye-hp);g.lineTo(W,ye+hp);g.lineTo(x1,y1+hp);g.closePath();g.fill();g.stroke();
+  }
+}
+(function loop(){draw();requestAnimationFrame(loop)})();
 
-        candleSeries.setData(candles);
-
-        // Активті ауыстыру функциясы (BTC пен XAUUSD)
-        function switchSymbol(symbol) {
-            currentSymbol = symbol;
-            document.getElementById('current-symbol-title').innerText = symbol;
-            
-            document.querySelectorAll('.symbol-btn').forEach(btn => {
-                btn.classList.toggle('active', btn.innerText.includes(symbol.slice(0, 3)));
-            });
-
-            candles = marketData[symbol];
-            candleSeries.setData(candles);
-            chart.timeScale().fitContent();
-        }
-
-        // Пайдаланушы жазған индикатор кодын іске қосу
-        function runCustomIndicator() {
-            const userCode = document.getElementById('code-editor').value;
-            try {
-                const runCode = new Function('chart', 'candles', userCode);
-                runCode(chart, candles);
-            } catch (e) {
-                alert('Индикатор кодунда ката бар: ' + e.message);
-            }
-        }
-
-        // Экран өлшемі өзгенде графикті автоматты түрде бейімдеу
-        window.addEventListener('resize', () => {
-            chart.resize(container.clientWidth, container.clientHeight);
-        });
-
-        // Бастапқыда график масштабын туралау
-        chart.timeScale().fitContent();
-    </script>
+function btn(parent,text,on,fn){const b=document.createElement('button');b.textContent=text;if(on)b.className='on';b.onclick=fn;parent.appendChild(b)}
+function ui(){
+  $('bs').innerHTML='';$('bt').innerHTML='';
+  Object.keys(SYMS).forEach(s=>btn($('bs'),s,s===sym,()=>{sym=s;ui();$('notes').value=store('notes_'+sym)||'';load()}));
+  TFS.forEach(t=>btn($('bt'),t,t===tf,()=>{tf=t;ui();load()}));
+}
+$('code').value=store('code')||DEF;
+$('run').onclick=()=>{store('code',$('code').value);run()};
+$('reset').onclick=()=>{store('code','');$('code').value=DEF;run()};
+$('code').addEventListener('keydown',e=>{
+  if(e.key==='Tab'){e.preventDefault();const t=e.target,s=t.selectionStart;t.value=t.value.slice(0,s)+'  '+t.value.slice(t.selectionEnd);t.selectionStart=t.selectionEnd=s+2}
+  if((e.ctrlKey||e.metaKey)&&e.key==='Enter'){$('run').click()}
+});
+$('notes').value=store('notes_'+sym)||'';
+$('notes').oninput=()=>store('notes_'+sym,$('notes').value);
+ui();load();
+</script>
 </body>
 </html>
